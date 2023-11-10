@@ -1,0 +1,49 @@
+%macro print 2
+mov rax, 1
+mov rdi, 1
+mov rsi, %1
+mov rdx, %2
+syscall
+%endmacro
+section .data
+msg1 db 'Enter the string :' , 10
+msglen1 equ $-msg1
+msg2 db 'Length of the string is :' , 10
+msglen2 equ $-msg2
+section .bss
+string resb 200
+result resb 16
+section .text
+global _start
+_start:
+print msg1 , msglen1
+mov rax, 0 ;read system call
+mov rdi, 0
+mov rsi , string
+mov rdx , 200
+syscall
+dec rax ; as enter has an ascii value too , do len-1
+mov rbx, rax
+print msg2, msglen2
+call display
+mov rax, 60 ;exit syscall
+mov rdi, 0
+syscall
+display :
+mov rdi, result
+mov cx,16
+UP:
+rol rbx, 04
+mov al, bl
+and al, 0fh
+cmp al ,09h
+jg add_37
+add al,30h
+jmp skip
+add_37 : add al, 37h
+skip : mov[rdi],al
+inc rdi
+dec cx
+jnz UP
+print result ,16
+ret

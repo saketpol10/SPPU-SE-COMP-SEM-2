@@ -1,0 +1,69 @@
+%macro print 2
+mov rax,1
+mov rdi,1
+mov rsi,%1
+mov rdx,%2
+syscall
+%endmacro
+section .data
+msg1 db 'Count of positive number is:',10
+msglen1 equ $-msg1
+msg2 db 'Count of negative number is:',10
+msglen2 equ $-msg2
+array dw 8000h,9030h,20h,0010h
+pcnt db 0
+ncnt db 0
+section .bss
+cnt resb 2
+result resb 16
+section .text
+global _start
+_start:
+mov byte[cnt],4
+mov rsi,array
+ipp:
+ BT word[rsi],15
+ jc l1
+ inc byte[pcnt]
+ jmp skip1
+l1:
+ inc byte[ncnt]
+skip1:
+ inc rsi
+ inc rsi
+ dec byte[cnt]
+ jnz ipp
+print msg1,msglen1
+mov bl,[pcnt]
+call display
+print msg2,msglen2
+mov bl,[ncnt]
+call display
+mov rax,60
+mov rdi,0
+syscall
+display:
+ mov rdi,result
+ mov cx,16
+ up1:
+ rol rbx,04
+ mov al,bl
+ and al,0fh
+ cmp al,09h
+ jg add_37
+ add al,30h
+ jmp skip
+ add_37:
+ add al,37h
+ skip:
+ mov [rdi],al
+ inc rdi
+ dec cx
+ jnz up1
+ print result,16
+ret
+OUTPUT:
+ bash -c 'nasm -felf64 main.asm && ld main.o && ./a.out'
+Count of positive number is:
+0000000000000002Count of negative number is:
+0000000000000002

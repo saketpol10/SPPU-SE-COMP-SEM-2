@@ -1,0 +1,111 @@
+%macro print 2
+mov rax, 1
+mov rdi, 1
+mov rsi, %1
+mov rdx, %2
+syscall
+%endmacro
+section .data
+msg1 db 'System is in protected mode. ' , 10
+msglen1 equ $-msg1
+msg2 db 'System is in real mode. ' , 10
+msglen2 equ $-msg2
+msg3 db 'Contents of GDTR are : ' , 10
+msglen3 equ $-msg3
+msg4 db 'Contents of LDTR are : ' , 10
+msglen4 equ $-msg4
+msg5 db 'Contents of IDTR are : ' , 10
+msglen5 equ $-msg5
+msg6 db 'Contents of TR are : ' , 10
+msglen6 equ $-msg6
+msg7 db 'Contents of MSW are : ' , 10
+msglen7 equ $-msg7
+msg8 db 'CPU ID : ' , 10
+msglen8 equ $-msg8
+m db 10
+section .bss
+result resb 4
+cr0_data resd 1
+id resd 1
+gdt resd 1
+resw 1
+ldt resw 1
+idt resd 1
+resw 1
+tr resw 1
+section .text
+global _start
+_start:
+SMSW eax ; read 32 bit cr0 reg
+mov [cr0_data], eax
+bt eax, 0
+jnc rmode
+print msg1, msglen1
+SGDT [gdt]
+SLDT[ldt]
+SIDT[idt]
+STR[tr]
+print msg3, msglen3
+mov bx, [gdt+4]
+call display
+mov bx, [gdt+2]
+call display
+mov bx,[gdt]
+call display
+print m, 1
+print msg4, msglen4
+mov bx, [ldt]
+call display
+print m, 1
+print msg5,msglen5
+mov bx, [idt+4]
+call display
+mov bx, [idt+2]
+call display
+mov bx,[idt]
+call display
+print m, 1
+print msg6, msglen6
+mov bx, [tr]
+call display
+print m, 1
+print msg7, msglen7
+mov bx, [cr0_data+2]
+call display
+mov bx, [cr0_data]
+call display
+print m, 1
+print msg8, msglen8
+mov eax, 0
+CPUID
+mov[id], eax
+mov bx, [id+2]
+call display
+mov bx, [id]
+call display
+print m, 1
+jmp exit
+rmode:
+print msg2, msglen2
+exit:
+mov rax, 60
+mov rdi, 0
+syscall
+display:
+mov rdi, result
+mov cx, 4
+up:
+rol bx, 4
+mov al,bl
+and al, 0fh
+cmp al, 09h
+jg add_37
+add al, 30h
+jmp skip
+add_37: add al, 37h
+skip: mov[rdi], al
+inc rdi
+dec cx
+jnz up
+print result, 4
+ret

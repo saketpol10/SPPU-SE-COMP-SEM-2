@@ -1,0 +1,54 @@
+%macro print 2
+mov rax, 1
+mov rdi, 1
+mov rsi, %1
+mov rdx, %2
+syscall
+%endmacro
+section .data
+msg1 db 'Largest number is :' , 10
+msglen1 equ $-msg1
+
+
+array db 20h,40h,45h,50h,65h
+section .bss
+result resb 16
+cnt resb 2
+section .text
+global _start
+_start:
+mov rsi, array
+mov byte[cnt], 6
+mov rax, 00h
+w1:
+cmp al, [rsi]
+jg w2
+mov al, [rsi]
+w2:
+inc rsi
+dec byte[cnt]
+jnz w1
+mov rbx, rax
+print msg1, msglen1
+call display
+mov rax, 60 ;exit call
+mov rdi, 0
+syscall
+display:
+mov rdi, result
+mov cx, 16
+UP:
+rol rbx, 04
+mov al, bl
+and al, 0fh
+cmp al, 09h
+jg add_37
+add al, 30h
+jmp skip
+add_37: add al, 37h
+skip: mov[rdi], al
+inc rdi
+dec cx
+jnz UP
+print result, 16
+ret
